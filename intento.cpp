@@ -44,6 +44,7 @@ void sort_in_memory(int64_t* array, size_t size) {
 }
 
 void external_quicksort(const std::string& input_filename, size_t total_elements, size_t memory_limit, int a, const std::string& output_filename) {
+    // Si N <= M
     if (total_elements <= memory_limit) {
         FILE* file = fopen(input_filename.c_str(), "rb");
         check_file_open(file, "lectura total en memoria", input_filename);
@@ -52,7 +53,8 @@ void external_quicksort(const std::string& input_filename, size_t total_elements
         fread(data.data(), ELEMENT_SIZE, total_elements, file);
         io_counter += (total_elements * ELEMENT_SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;
         fclose(file);
-
+        
+        // ordenar el arreglo en memoria principal
         sort_in_memory(data.data(), total_elements);
 
         FILE* out = fopen(output_filename.c_str(), "wb");
@@ -62,7 +64,8 @@ void external_quicksort(const std::string& input_filename, size_t total_elements
         fclose(out);
         return;
     }
-
+    
+    //Leer un bloque de A aleatorio
     FILE* input = fopen(input_filename.c_str(), "rb");
     check_file_open(input, "lectura para pivotes", input_filename);
 
@@ -72,14 +75,15 @@ void external_quicksort(const std::string& input_filename, size_t total_elements
     std::vector<int64_t> buffer(ELEMENTS_PER_BLOCK);
     read_block(input, buffer.data(), random_block);
 
+    //elegir a − 1 de sus elementos al azar y ordenarlos
     std::vector<int64_t> pivots;
     for (int i = 0; i < a - 1; i++) {
         pivots.push_back(buffer[rand() % ELEMENTS_PER_BLOCK]);
     }
-
     std::sort(pivots.begin(), pivots.end());
     fclose(input);
 
+    //particionar el arreglo A en a subarreglos, de tal forma de que estos subarreglos sean separados por los pivotes elegidos.
     std::vector<FILE*> parts(a);
     std::vector<std::string> part_filenames(a);
     for (int i = 0; i < a; i++) {
@@ -115,12 +119,14 @@ void external_quicksort(const std::string& input_filename, size_t total_elements
         fclose(part);
     }
 
+    // Realizar recursivamente Quicksort externo en cada uno de los subarreglos.
     std::vector<std::string> sorted_part_filenames(a);
     for (int i = 0; i < a; i++) {
         sorted_part_filenames[i] = input_filename + "_sorted_part_" + std::to_string(i) + ".bin";
         external_quicksort(part_filenames[i], sizes[i], memory_limit, a, sorted_part_filenames[i]);
     }
 
+    // Concatenar los subarreglos ordenados para obtener un único arreglo, de tal forma de que este arreglo resultante esté completamente ordenado.
     FILE* output = fopen(output_filename.c_str(), "wb");
     check_file_open(output, "escritura final", output_filename);
     std::vector<int64_t> write_buf(ELEMENTS_PER_BLOCK);
