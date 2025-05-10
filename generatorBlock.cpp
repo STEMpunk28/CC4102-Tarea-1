@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
-    std::cout << "\nArchivo generado: input.bin (" << TOTAL_BYTES / (1024 * 1024) << " MB)\n";
+    std::cout << "\nArchivo generado: " << filename << " (" << TOTAL_BYTES / (1024 * 1024) << " MB)\n";
     std::cout << "Tiempo total: " << elapsed.count() << " segundos\n";
     return 0;
 }
