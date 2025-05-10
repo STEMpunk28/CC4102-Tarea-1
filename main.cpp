@@ -18,17 +18,18 @@ bool run_command(const std::string& cmd) {
 
 int main() {
     const size_t MB = 1024 * 1024;
-    const std::string input_file = "salida.bin";
+    const std::string input_file = "input.bin";
     const std::string output_file = "salidas.bin";
 
     for (int m = 4; m <= 60; m += 4) {
-        size_t N = m * MB / sizeof(int64_t);
+        size_t N = m * 50 * MB / sizeof(int64_t);
         std::cout << "\n==== Tamaño: " << m << "MB ====\n";
 
         for (int trial = 1; trial <= 5; ++trial) {
             std::cout << "\n-- Prueba #" << trial << " con N = " << N << " --\n";
 
-            // std::string gen_cmd = "generate.exe " + std::to_string(N);
+            if (!run_command("generate.exe " + std::to_string(N)))
+                continue;
             std::cout << ">> generate.exe " << N << "\n";
 
             std::cout << "-> MergeSort\n";
@@ -52,7 +53,7 @@ int main() {
             // fs::remove(output_file);
 
             std::cout << ">> Borrar " << input_file << "\n";
-            // fs::remove(input_file);
+            fs::remove(input_file);
         }
     }
 
