@@ -17,9 +17,9 @@ int main(int argc, char* argv[]) {
     const size_t BLOCK_SIZE = BLOCK_BYTES / sizeof(int64_t); // enteros por bloque
     const size_t TOTAL_ELEMENTS = TOTAL_BYTES / sizeof(int64_t); // total de int64_t
     
-    std::ofstream out("salida.bin", std::ios::binary);
+    std::ofstream out("input.bin", std::ios::binary);
     if (!out) {
-        std::cerr << "Error al crear el archivo salida.bin\n";
+        std::cerr << "Error al crear el archivo input.bin\n";
         return 1;
     }
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
-    std::cout << "\nArchivo generado: salida.bin (" << TOTAL_BYTES / (1024 * 1024) << " MB)\n";
+    std::cout << "\nArchivo generado: input.bin (" << TOTAL_BYTES / (1024 * 1024) << " MB)\n";
     std::cout << "Tiempo total: " << elapsed.count() << " segundos\n";
     return 0;
 }
