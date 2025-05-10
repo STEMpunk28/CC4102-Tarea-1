@@ -68,7 +68,7 @@ int main() {
     const size_t MB = 1024 * 1024;
     const size_t A = 48;
     const std::string input_file = "input.bin";
-    const std::string output_file = "salidas.bin";
+    const std::string output_file = "output.bin";
 
     TeeStream out(std::cout, "experimentacion.txt");
 
@@ -101,8 +101,8 @@ int main() {
                 continue;
 
             out << ">> check.exe " << output_file << "\n";
-            // if (!run_command("check.exe " + output_file, out))
-            //     continue;
+            if (!run_command("check.exe " + output_file, out))
+                continue;
 
             out << ">> Borrar " << output_file << "\n";
             fs::remove(output_file);
