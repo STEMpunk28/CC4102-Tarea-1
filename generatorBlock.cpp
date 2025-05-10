@@ -8,18 +8,20 @@
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Uso: " << argv[0] << " <M>\n";
+    if (argc != 3) {
+        std::cerr << "Uso: " << argv[0] << " <nombre_archivo> <Tamaño_en_bytes>\n";
         return 1;
     }
-    const size_t TOTAL_BYTES = std::stoll(argv[1]); // N
+
+    const size_t TOTAL_BYTES = std::stoll(argv[2]);
     const size_t BLOCK_BYTES = 10 * 1024 * 1024; // 10 MB por bloque
     const size_t BLOCK_SIZE = BLOCK_BYTES / sizeof(int64_t); // enteros por bloque
     const size_t TOTAL_ELEMENTS = TOTAL_BYTES / sizeof(int64_t); // total de int64_t
-    
-    std::ofstream out("input.bin", std::ios::binary);
+
+    const std::string filename = argv[1];
+    std::ofstream out(filename, std::ios::binary);
     if (!out) {
-        std::cerr << "Error al crear el archivo input.bin\n";
+        std::cerr << "Error al crear el archivo " << filename << "\n";
         return 1;
     }
 
