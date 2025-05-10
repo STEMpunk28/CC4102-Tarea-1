@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
         out.write(reinterpret_cast<char*>(block.data()), count * sizeof(int64_t));
         written += count;
 
-        std::cout << "\rProgreso: " << (100 * written / TOTAL_ELEMENTS) << "%   " << std::flush;
+        //std::cout << "\rProgreso: " << (100 * written / TOTAL_ELEMENTS) << "%   " << std::flush;
     }
 
     out.close();

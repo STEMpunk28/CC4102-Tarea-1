@@ -3,6 +3,9 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
+#include <cstdio>
+#include <memory>
+#include <array>
 
 namespace fs = std::filesystem;
 
@@ -32,16 +35,38 @@ public:
 // Ejecuta un comando y muestra errores si falla
 bool run_command(const std::string& cmd, TeeStream& out) {
     out << "Ejecutando: " << cmd << std::endl;
-    int ret = std::system(cmd.c_str());
+    
+    // Open process using popen to capture stdout
+    std::array<char, 128> buffer;
+    std::string result;
+    FILE* fp = popen(cmd.c_str(), "r");
+    if (!fp) {
+        out << "Error al ejecutar: " << cmd << std::endl;
+        return false;
+    }
+
+    // Read the command output line by line
+    while (fgets(buffer.data(), buffer.size(), fp) != nullptr) {
+        result += buffer.data();
+    }
+
+    // Close the process
+    int ret = pclose(fp);
+    
     if (ret != 0) {
         out << "Error al ejecutar: " << cmd << std::endl;
         return false;
     }
+
+    // Log the output of the command to both console and file
+    out << result << std::endl;
+
     return true;
 }
 
 int main() {
     const size_t MB = 1024 * 1024;
+    const size_t A = 48;
     const std::string input_file = "input.bin";
     const std::string output_file = "salidas.bin";
 
@@ -72,15 +97,15 @@ int main() {
 
             out << "-> QuickSort\n";
             out << ">> QuickSort.exe " << input_file << " " << output_file << "\n";
-            // if (!run_command("QuickSort.exe " + input_file + " " + output_file, out))
-            //     continue;
+            if (!run_command("QuickSort.exe " + input_file + " " + output_file + " " + std::to_string(A) + " " + std::to_string(N), out))
+                continue;
 
             out << ">> check.exe " << output_file << "\n";
             // if (!run_command("check.exe " + output_file, out))
             //     continue;
 
             out << ">> Borrar " << output_file << "\n";
-            // fs::remove(output_file);
+            fs::remove(output_file);
 
             out << ">> Borrar " << input_file << "\n";
             fs::remove(input_file);
