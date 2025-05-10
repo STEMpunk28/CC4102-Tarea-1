@@ -55,7 +55,7 @@ int main() {
             out << "\n-- Prueba #" << trial << " con N = " << N << " B --\n";
 
             out << ">> generate.exe " << N << "\n";
-            if (!run_command("generate.exe " + std::to_string(N), out))
+            if (!run_command("generate.exe " + input_file + " " + std::to_string(N), out))
                  continue;
 
             out << "-> MergeSort\n";
