@@ -6,13 +6,17 @@
 #include <cstdint>
 #include <chrono>
 
-const size_t M = 50 * 1024 * 1024; // Memoria principal = 50MB
-const size_t TOTAL_BYTES = 60 * M; // N
-const size_t BLOCK_BYTES = 10 * 1024 * 1024;        // 10 MB por bloque
-const size_t BLOCK_SIZE = BLOCK_BYTES / sizeof(int64_t); // enteros por bloque
-const size_t TOTAL_ELEMENTS = TOTAL_BYTES / sizeof(int64_t); // total de int64_t
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Uso: " << argv[0] << " <M>\n";
+        return 1;
+    }
+    const size_t TOTAL_BYTES = std::stoll(argv[1]); // N
+    const size_t BLOCK_BYTES = 10 * 1024 * 1024; // 10 MB por bloque
+    const size_t BLOCK_SIZE = BLOCK_BYTES / sizeof(int64_t); // enteros por bloque
+    const size_t TOTAL_ELEMENTS = TOTAL_BYTES / sizeof(int64_t); // total de int64_t
+    
     std::ofstream out("salida.bin", std::ios::binary);
     if (!out) {
         std::cerr << "Error al crear el archivo salida.bin\n";
