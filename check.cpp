@@ -29,8 +29,12 @@ bool verificarOrden(const std::string &archivo) {
     return true; // El archivo está ordenado
 }
 
-int main() {
-    std::string archivo = "salidas.bin";
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Uso: " << argv[0] << " <nombre_del_archivo>\n";
+        return 1;
+    }
+    std::string archivo = argv[1];
     if (verificarOrden(archivo)) {
         std::cout << "El archivo está ordenado." << std::endl;
     } else {
