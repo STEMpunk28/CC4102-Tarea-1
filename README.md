@@ -6,10 +6,21 @@
     - Sebastián Saez H.
 
 ## Encontrar Aridad
+- Compilamos el codigo a utilizar
+
+```
+g++ -O2 -o ./buscarA ./busqueda_a.cpp
+```
+
+- Ejecutamos
+
+```
+./buscarA
+```
 
 ## Realizar experimentación
 
-- Compilamos los codigos a utlizar
+- Compilamos los codigos a utilizar
 
 ```
 g++ -O2 -o ./generate ./generatorBlock.cpp
