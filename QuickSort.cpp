@@ -181,10 +181,10 @@ void quicksort_external(const std::string& input_file, const std::string& output
  * Parámetros:
  * @param argc Número de argumentos.
  * @param argv Lista de argumentos. Se espera:
- *             - argv[1]: nombre del archivo de entrada
- *             - argv[2]: nombre del archivo de salida
- *             - argv[3]: número de particiones (a)
- *             - argv[4]: tamaño en bytes del archivo de entrada
+ * * argv[1]: nombre del archivo de entrada
+ * * argv[2]: nombre del archivo de salida
+ * * argv[3]: número de particiones (a)
+ * * argv[4]: tamaño en bytes del archivo de entrada
  *
  * @return 0 si todo fue exitoso, 1 si hubo error de uso.
  */

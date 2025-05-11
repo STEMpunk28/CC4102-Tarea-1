@@ -40,8 +40,11 @@ bool verificarOrden(const std::string &archivo) {
  * Función principal que recibe como argumento el nombre de un archivo binario
  * y verifica si su contenido está ordenado.
  *
- * @param argc Cantidad de argumentos recibidos por línea de comandos.
- * @param argv Arreglo de cadenas de caracteres con los argumentos. Se espera: <programa> <archivo>.
+ * Parámetros:
+ * @param argc Número de argumentos.
+ * @param argv Lista de argumentos. Se espera:
+ * * argv[1]: Nombre del archivo a ordenar
+ * 
  * @return 0 si se ejecuta correctamente, 1 si hay error de uso.
  */
 int main(int argc, char* argv[]) {

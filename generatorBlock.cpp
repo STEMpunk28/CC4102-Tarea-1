@@ -6,7 +6,18 @@
 #include <cstdint>
 #include <chrono>
 
-
+/**
+ * Programa para generar un archivo binario que contiene una cantidad dada de números enteros de 64 bits
+ * en orden aleatorio, distribuidos en bloques de memoria simulados.
+ *
+ * Parámetros:
+ * @param argc Número de argumentos.
+ * @param argv Lista de argumentos. Se espera:
+ * * argv[1]: Nombre del archivo a generar.
+ * * argv[2]: Tamaño total del archivo en bytes (debe ser múltiplo de 8).
+ *
+ * @return 0 si todo fue exitoso, 1 si hubo error de uso.
+ */
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         std::cerr << "Uso: " << argv[0] << " <nombre_archivo> <Tamaño_en_bytes>\n";
