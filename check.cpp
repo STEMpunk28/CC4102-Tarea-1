@@ -2,6 +2,13 @@
 #include <fstream>
 #include <cstdint>
 
+/**
+ * Verifica si los enteros contenidos en un archivo binario están ordenados de forma creciente.
+ *
+ * @param archivo Nombre del archivo binario a verificar.
+ * 
+ * @return `true` si el archivo está ordenado o contiene 0/1 elementos, `false` si hay al menos un par fuera de orden.
+ */
 bool verificarOrden(const std::string &archivo) {
     std::ifstream file(archivo, std::ios::binary); // Abrimos el archivo en modo binario
     if (!file) {
@@ -29,6 +36,14 @@ bool verificarOrden(const std::string &archivo) {
     return true; // El archivo está ordenado
 }
 
+/**
+ * Función principal que recibe como argumento el nombre de un archivo binario
+ * y verifica si su contenido está ordenado.
+ *
+ * @param argc Cantidad de argumentos recibidos por línea de comandos.
+ * @param argv Arreglo de cadenas de caracteres con los argumentos. Se espera: <programa> <archivo>.
+ * @return 0 si se ejecuta correctamente, 1 si hay error de uso.
+ */
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Uso: " << argv[0] << " <nombre_del_archivo>\n";
