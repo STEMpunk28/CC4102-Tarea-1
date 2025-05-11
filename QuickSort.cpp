@@ -186,7 +186,7 @@ void quicksort_external(const std::string& input_file, const std::string& output
  *             - argv[3]: número de particiones (a)
  *             - argv[4]: tamaño en bytes del archivo de entrada
  *
- * Retorna 0 si todo fue exitoso, 1 si hubo error de uso.
+ * @return 0 si todo fue exitoso, 1 si hubo error de uso.
  */
 int main(int argc, char* argv[]) {
     if (argc != 5) {
