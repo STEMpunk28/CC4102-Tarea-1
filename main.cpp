@@ -65,26 +65,26 @@ bool run_command(const std::string& cmd, TeeStream& out) {
 
 int main() {
     const size_t MB = 1024 * 1024;
-    const size_t A = 48;
+    const size_t A = 96;
     const std::string input_file = "input.bin";
     const std::string output_file = "output.bin";
 
     TeeStream out(std::cout, "experimentacion.txt");
 
     for (int m = 4; m <= 60; m += 4) {
+        size_t N_in_bytes = m * 50 * MB;
         size_t N = m * 50 * MB / sizeof(int64_t);
         out << "\n==== Tamaño: " << m * 50 << " MB ====\n";
 
         for (int trial = 1; trial <= 5; ++trial) {
-            out << "\n-- Prueba #" << trial << " con N = " << N << " B --\n";
+            out << "\n-- Prueba #" << trial << " con N = " << N_in_bytes << " B --\n";
 
             out << ">> generate.exe " << N << "\n";
-            if (!run_command("generate.exe " + input_file + " " + std::to_string(N), out))
+            if (!run_command("generate.exe " + input_file + " " + std::to_string(N_in_bytes), out))
                  continue;
 
             out << "-> MergeSort\n";
-            out << ">> MergeSort.exe " << input_file << " " << output_file << "\n";
-            if (!run_command("MergeSort.exe " + input_file + " " + output_file + " " + std::to_string(A) + " " + std::to_string(N), out))
+            if (!run_command("MergeSort.exe " + input_file + " " + output_file + " " + std::to_string(N_in_bytes) + " " + std::to_string(50*MB) + " " + std::to_string(A), out))
                 continue;
 
             out << ">> check.exe " << output_file << "\n";
@@ -95,8 +95,7 @@ int main() {
             fs::remove(output_file);
 
             out << "-> QuickSort\n";
-            out << ">> QuickSort.exe " << input_file << " " << output_file << "\n";
-            if (!run_command("QuickSort.exe " + input_file + " " + output_file + " " + std::to_string(A) + " " + std::to_string(N), out))
+            if (!run_command("QuickSort.exe " + input_file + " " + output_file + " " + std::to_string(A) + " " + std::to_string(N_in_bytes), out))
                 continue;
 
             out << ">> check.exe " << output_file << "\n";
