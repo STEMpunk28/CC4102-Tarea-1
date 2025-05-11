@@ -84,7 +84,7 @@ int main() {
 
             out << "-> MergeSort\n";
             out << ">> MergeSort.exe " << input_file << " " << output_file << "\n";
-            if (!run_command("MergeSort.exe " + input_file + " " + output_file + " " + std::to_string(A), out))
+            if (!run_command("MergeSort.exe " + input_file + " " + output_file + " " + std::to_string(A) + " " + std::to_string(N), out))
                 continue;
 
             out << ">> check.exe " << output_file << "\n";
