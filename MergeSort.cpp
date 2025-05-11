@@ -1,139 +1,215 @@
-#include <cstdio>
-#include <vector>
-#include <queue>
 #include <string>
-#include <algorithm>
-#include <random>
+#include <vector>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdint>
 #include <chrono>
-#include <cstring>
-#include <cassert>
-#include <filesystem>
-#include <unistd.h>
 #include <iostream>
+#include <queue>
+#include <algorithm>
+#include <cassert>
+
 using namespace std::chrono;
 
-size_t IO_COUNT = 0;  // contador global de I/Os
-const size_t B = 4096; // Tamaño de bloque en bytes
-const size_t ints_per_block = B / sizeof(int64_t);  // número de enteros por bloque
+const int64_t ELEMENT_SIZE = sizeof(int64_t);
+const int64_t BLOCK_SIZE = 4096;  // Tamaño de bloque de 4096 bytes
+const int64_t ELEMENTS_PER_BLOCK = BLOCK_SIZE / ELEMENT_SIZE;
 
-struct HeapNode {
-    int64_t value;
-    size_t index;
-    bool operator>(const HeapNode& other) const {
-        return value > other.value;
-    }
-};
+// Contador global de operaciones de lecturas y escrituras realizadas en disco
+long total_read_io = 0, total_write_io = 0;
 
-void merge_files(const std::vector<std::string>& files, const std::string& output_file, size_t start_index) {
-    size_t k = files.size();
-    std::vector<FILE*> ins(k);
-    std::vector<std::vector<int64_t>> buffers(k);
-    std::vector<size_t> indices(k, 0), sizes(k, 0);
-    std::priority_queue<HeapNode, std::vector<HeapNode>, std::greater<>> heap;
+long read_io = 0, write_io = 0;
 
-    for (size_t i = 0; i < k; ++i) {
-        ins[i] = fopen(files[i].c_str(), "rb");
-        buffers[i].resize(ints_per_block);
-        sizes[i] = fread(buffers[i].data(), sizeof(int64_t), ints_per_block, ins[i]); IO_COUNT++;
-        if (sizes[i] > 0) heap.push({buffers[i][0], i});
+void sort_in_memory(const std::string& input_file, const std::string& output_file, int64_t N) {
+    FILE* f = fopen(input_file.c_str(), "rb");
+    if (!f) {
+        fprintf(stderr, "[ERROR] No se pudo abrir %s para lectura\n", input_file.c_str());
+        exit(1);
     }
 
-    FILE* out = fopen(output_file.c_str(), "rb+");
-    fseek(out, start_index * sizeof(int64_t), SEEK_SET);
+    std::vector<int64_t> buf(N);
+    for (int64_t i = 0; i < N; i += ELEMENTS_PER_BLOCK) {
+        int64_t chunk = std::min(ELEMENTS_PER_BLOCK, N - i);
+        fread(&buf[i], ELEMENT_SIZE, chunk, f);
+    }
+    fclose(f);
 
-    std::vector<int64_t> out_buffer(ints_per_block);
-    size_t out_index = 0;
+    std::sort(buf.begin(), buf.end());
 
-    while (!heap.empty()) {
-        auto [val, i] = heap.top(); heap.pop();
-
-        out_buffer[out_index++] = val;
-        if (out_index == ints_per_block) {
-            fwrite(out_buffer.data(), sizeof(int64_t), out_index, out); IO_COUNT++;
-            out_index = 0;
-        }
-
-        if (++indices[i] == sizes[i]) {
-            sizes[i] = fread(buffers[i].data(), sizeof(int64_t), ints_per_block, ins[i]); IO_COUNT++;
-            indices[i] = 0;
-        }
-
-        if (sizes[i] > 0) {
-            heap.push({buffers[i][indices[i]], i});
-        }
+    FILE* out = fopen(output_file.c_str(), "wb");
+    if (!out) {
+        fprintf(stderr, "[ERROR] No se pudo abrir %s para escritura\n", output_file.c_str());
+        exit(1);
     }
 
-    if (out_index > 0) {
-        fwrite(out_buffer.data(), sizeof(int64_t), out_index, out); IO_COUNT++;
+    for (int64_t i = 0; i < N; i += ELEMENTS_PER_BLOCK) {
+        int64_t chunk = std::min(ELEMENTS_PER_BLOCK, N - i);
+        fwrite(&buf[i], ELEMENT_SIZE, chunk, out);
     }
-
-    for (FILE* f : ins) fclose(f);
     fclose(out);
-
-    for (const auto& file : files) std::remove(file.c_str());
 }
 
-void external_mergesort(const std::string& input_file, const std::string& output_file, size_t a) {
-    FILE* in = fopen(input_file.c_str(), "rb");
-    fseek(in, 0, SEEK_END);
-    size_t file_size = ftell(in);
-    size_t total_ints = file_size / sizeof(int64_t);
-    rewind(in);
+void merge_external(const std::vector<std::string>& input_files, const std::string& output_file) {
+    std::vector<FILE*> input_fps(input_files.size());
+    std::vector<std::vector<int64_t>> buffers(input_files.size());
+    std::vector<size_t> buffer_pos(input_files.size(), 0);
+    std::vector<size_t> buffer_size(input_files.size(), 0);
 
-    size_t run_size = ints_per_block * a;
-    std::vector<std::string> run_files;
-    std::vector<int64_t> buffer(run_size);
-
-    while (true) {
-        size_t read = fread(buffer.data(), sizeof(int64_t), run_size, in);
-        if (read == 0) break;
-        IO_COUNT++;
-
-        std::sort(buffer.begin(), buffer.begin() + read);
-
-        std::string run_file = "run_" + std::to_string(run_files.size()) + ".bin";
-        FILE* out = fopen(run_file.c_str(), "wb");
-        fwrite(buffer.data(), sizeof(int64_t), read, out); IO_COUNT++;
-        fclose(out);
-
-        run_files.push_back(run_file);
+    for (size_t i = 0; i < input_files.size(); i++) {
+        input_fps[i] = fopen(input_files[i].c_str(), "rb");
+        if (!input_fps[i]) {
+            fprintf(stderr, "[ERROR] No se pudo abrir %s para lectura\n", input_files[i].c_str());
+            exit(1);
+        }
+        buffers[i].resize(ELEMENTS_PER_BLOCK);
+        buffer_size[i] = fread(buffers[i].data(), ELEMENT_SIZE, ELEMENTS_PER_BLOCK, input_fps[i]);
+        read_io++;
     }
 
-    fclose(in);
+    FILE* out = fopen(output_file.c_str(), "wb");
+    if (!out) {
+        fprintf(stderr, "[ERROR] No se pudo abrir %s para escritura\n", output_file.c_str());
+        exit(1);
+    }
 
-    FILE* final = fopen(output_file.c_str(), "wb");
-    ftruncate(fileno(final), file_size);
-    fclose(final);
+    auto compare = [](const std::pair<int64_t, size_t>& a, const std::pair<int64_t, size_t>& b) {
+        return a.first > b.first;
+    };
+    std::priority_queue<std::pair<int64_t, size_t>, std::vector<std::pair<int64_t, size_t>>, decltype(compare)> min_heap(compare);
 
-    merge_files(run_files, output_file, 0);
+    for (size_t i = 0; i < input_files.size(); i++) {
+        if (buffer_size[i] > 0) {
+            min_heap.push({buffers[i][0], i});
+            buffer_pos[i] = 1;
+        }
+    }
+
+    std::vector<int64_t> out_buffer;
+    out_buffer.reserve(ELEMENTS_PER_BLOCK);
+
+    while (!min_heap.empty()) {
+        auto [val, idx] = min_heap.top();
+        min_heap.pop();
+        out_buffer.push_back(val);
+
+        if (out_buffer.size() == ELEMENTS_PER_BLOCK) {
+            fwrite(out_buffer.data(), ELEMENT_SIZE, ELEMENTS_PER_BLOCK, out);
+            write_io++;
+            out_buffer.clear();
+        }
+
+        if (buffer_pos[idx] < buffer_size[idx]) {
+            min_heap.push({buffers[idx][buffer_pos[idx]++], idx});
+        } else {
+            buffer_size[idx] = fread(buffers[idx].data(), ELEMENT_SIZE, ELEMENTS_PER_BLOCK, input_fps[idx]);
+            read_io++;
+            buffer_pos[idx] = 0;
+            if (buffer_size[idx] > 0) {
+                min_heap.push({buffers[idx][buffer_pos[idx]++], idx});
+            }
+        }
+    }
+
+    if (!out_buffer.empty()) {
+        fwrite(out_buffer.data(), ELEMENT_SIZE, out_buffer.size(), out);
+        write_io++;
+    }
+
+    for (auto fp : input_fps) fclose(fp);
+    fclose(out);
 }
 
-int run_and_measure(const std::string& input_file, const std::string& output_file, int a) {
-    IO_COUNT = 0;
-    external_mergesort(input_file, output_file, a);
-    return IO_COUNT;
-}
+void mergesort_external(const std::string& input_file, const std::string& output_file, int64_t N, int64_t M, int64_t a) {
 
+    if (N <= M) {
+        sort_in_memory(input_file, output_file, N);
+        return;
+    }
+
+    int64_t block_size = (N + a - 1) / a;
+    std::vector<std::string> temp_files;
+
+    FILE* f = fopen(input_file.c_str(), "rb");
+    if (!f) {
+        fprintf(stderr, "[ERROR] No se pudo abrir %s\n", input_file.c_str());
+        exit(1);
+    }
+
+    for (int i = 0; i < a && N > 0; ++i) {
+        int64_t current_size = std::min(N, block_size);
+        std::vector<int64_t> buffer(current_size);
+
+        for (int64_t j = 0; j < current_size; j += ELEMENTS_PER_BLOCK) {
+            int64_t chunk = std::min(ELEMENTS_PER_BLOCK, current_size - j);
+            fread(&buffer[j], ELEMENT_SIZE, chunk, f);
+            read_io++;
+        }
+
+        std::string temp_file = input_file + "_part_" + std::to_string(i);
+        FILE* tf = fopen(temp_file.c_str(), "wb");
+        if (!tf) {
+            fprintf(stderr, "[ERROR] No se pudo crear %s\n", temp_file.c_str());
+            exit(1);
+        }
+
+        for (int64_t j = 0; j < current_size; j += ELEMENTS_PER_BLOCK) {
+            int64_t chunk = std::min(ELEMENTS_PER_BLOCK, current_size - j);
+            fwrite(&buffer[j], ELEMENT_SIZE, chunk, tf);
+            write_io++;
+        }
+
+        fclose(tf);
+        temp_files.push_back(temp_file);
+        N -= current_size;
+    }
+    fclose(f);
+
+    for (size_t i = 0; i < temp_files.size(); ++i) {
+        std::string sorted_temp = temp_files[i] + "_sorted";
+        FILE* tf = fopen(temp_files[i].c_str(), "rb");
+        fseek(tf, 0, SEEK_END);
+        int64_t file_size = ftell(tf);
+        fclose(tf);
+
+        int64_t num_elements = file_size / ELEMENT_SIZE;
+        mergesort_external(temp_files[i], sorted_temp, num_elements, M, a);
+        remove(temp_files[i].c_str());
+        temp_files[i] = sorted_temp;
+    }
+
+    merge_external(temp_files, output_file);
+
+    for (const auto& temp_file : temp_files) {
+        remove(temp_file.c_str());
+    }
+
+    total_read_io += read_io;
+    total_write_io += write_io;
+}
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
-        fprintf(stderr, "Uso: %s <archivo_entrada> <archivo_salida> <a>\n", argv[0]);
+    if (argc != 6) {
+        fprintf(stderr, "Uso: %s <archivo_entrada> <archivo_salida> <N_bytes> <M_bytes> <aridad_a>\n", argv[0]);
         return 1;
     }
 
-    std::string input = argv[1];
-    std::string output = argv[2];
-    int a = atoi(argv[3]);
+    std::string input_file = argv[1];
+    std::string output_file = argv[2];
+    int64_t N_bytes = atoll(argv[3]);
+    int64_t M_bytes = atoll(argv[4]);
+    int64_t a = atoll(argv[5]);
+    int64_t N = N_bytes / ELEMENT_SIZE;
 
     auto start = high_resolution_clock::now();
-
-    int io_count = run_and_measure(input, output, a);
-
+    mergesort_external(input_file, output_file, N, M_bytes / ELEMENT_SIZE, a);
     auto end = high_resolution_clock::now();
+
     auto duration = duration_cast<milliseconds>(end - start);
-    std::cout << "Tiempo total: " << duration.count() << "ms" << std::endl;
-    std::cout << "Total de I/Os: " << io_count << std::endl;
+
+    printf("Tiempo total: %lld ms\n", duration.count());
+    printf("I/Os totales: %ld (lecturas: %ld, escrituras: %ld)\n",
+        total_read_io + total_write_io, total_read_io, total_write_io);
 
     return 0;
 }
