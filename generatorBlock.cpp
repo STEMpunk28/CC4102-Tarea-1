@@ -8,7 +8,7 @@
 
 /**
  * Programa para generar un archivo binario que contiene una cantidad dada de números enteros de 64 bits
- * en orden aleatorio, distribuidos en bloques de memoria simulados.
+ * en orden aleatorio.
  *
  * Parámetros:
  * @param argc Número de argumentos.
