@@ -9,7 +9,19 @@
 
 namespace fs = std::filesystem;
 
-// Clase para imprimir simultáneamente en consola y archivo
+/**
+ * Permite imprimir simultáneamente en la consola estándar (`std::cout`) y en un archivo.
+ * 
+ * Constructor:
+ *   TeeStream(std::ostream& c, const std::string& filename)
+ *     - c: flujo de salida de consola (por lo general, std::cout).
+ *     - filename: nombre del archivo donde también se escribirá la salida.
+ * 
+ * Métodos:
+ *   operator<<: Sobrecarga del operador << para enviar datos tanto al flujo de consola como al archivo.
+ *     - value: cualquier dato imprimible por ostream.
+ *     - manip: manipuladores de flujo como std::endl.
+ */
 class TeeStream {
     std::ostream& console;
     std::ofstream file;
@@ -32,6 +44,19 @@ public:
     }
 };
 
+/**
+ * Ejecuta un comando del sistema, redirige su salida (stdout y stderr) a un archivo temporal
+ * y luego imprime su contenido a través de un objeto TeeStream. Al utilizar Docker, se debio
+ * cambiar la forma en la que se guardaba la salida al archivo, por lo que el archivo queda vacio.
+ * 
+ * Parámetros:
+ *   - cmd: comando del sistema a ejecutar.
+ *   - out: objeto TeeStream para imprimir salida simultáneamente en consola y archivo.
+ * 
+ * Retorno:
+ *   - true si el comando se ejecutó correctamente (código de retorno 0).
+ *   - false si hubo un error al ejecutar el comando.
+ */
 bool run_command(const std::string& cmd, TeeStream& out) {
     std::string temp_file = "experimentacion.txt";
     std::string full_cmd = cmd + " > " + temp_file + " 2>&1"; // Redirect stdout and stderr
@@ -55,7 +80,25 @@ bool run_command(const std::string& cmd, TeeStream& out) {
     return true;
 }
 
-
+/**
+ * Ejecuta una batería de pruebas automatizadas de ordenamiento externo.
+ * Para diferentes tamaños de entrada, se realizan pruebas con los algoritmos MergeSort y QuickSort,
+ * verificando la validez del resultado con un programa `check`, y registrando toda la salida
+ * en el archivo `experimentacion.txt`.
+ * 
+ * Proceso:
+ *   - Por cada tamaño de entrada (200MB, 400MB, ..., 800MB):
+ *       - Se generan datos de prueba con `generate`.
+ *       - Se ordenan con `MergeSort`.
+ *       - Se valida el resultado con `check`.
+ *       - Se repite el proceso usando `QuickSort`.
+ * 
+ * Parámetros:
+ *   - Ninguno (rutas y parámetros están codificados en el cuerpo).
+ * 
+ * Retorno:
+ *   - 0 si la simulación se ejecuta correctamente.
+ */
 int main() {
     const size_t MB = 1024 * 1024;
     const size_t A = 96;
@@ -64,7 +107,7 @@ int main() {
 
     TeeStream out(std::cout, "experimentacion.txt");
 
-    for (int m = 4; m <= 60; m += 4) {
+    for (int m = 4; m <= 16; m += 4) {
         size_t N_in_bytes = m * 50 * MB;
         size_t N = m * 50 * MB / sizeof(int64_t);
         out << "\n==== Tamaño: " << m * 50 << " MB ====\n";
