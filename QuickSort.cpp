@@ -214,5 +214,5 @@ int main(int argc, char* argv[]) {
     printf("I/Os totales: %ld (lecturas: %ld, escrituras: %ld)\n",
         total_read_io + total_write_io, total_read_io, total_write_io);
     
-        return 0;
+    return 0;
 }
