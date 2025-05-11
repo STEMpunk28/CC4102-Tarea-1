@@ -8,20 +8,31 @@
 #include <bits/stdc++.h>
 using namespace std::chrono;
 
+// Tamaño de un entero de 64 bits (en bytes)
 const int64_t ELEMENT_SIZE = sizeof(int64_t);
+// Tamaño de un bloque de disco (en bytes)
 const int64_t BLOCK_SIZE = 4096;
+// Cantidad de elementos que caben en un bloque
 const int64_t ELEMENTS_PER_BLOCK = BLOCK_SIZE / ELEMENT_SIZE;
 
-long total_read_io = 0;
-long total_write_io = 0;
+// Contador global de operaciones de lecturas y escrituras realizadas en disco
+long total_read_io = 0, total_write_io = 0;
 
-std::string result = "";
-
+// Contadores de operaciones de lectura y escritura por llamada a quicksort_external
 long read_io = 0, write_io = 0;
 
+/**
+ * Ordena un archivo binario que contiene enteros de 64 bits usando una versión de Quicksort multi-pivote en memoria externa.
+ *
+ * Parámetros:
+ * @param input_file  Nombre del archivo de entrada que contiene los enteros a ordenar.
+ * @param output_file Nombre del archivo de salida donde se guardarán los enteros ya ordenados.
+ * @param a           Número de pivotes + 1 que se utilizarán en cada nivel de recursión.
+ * @param N           Número total de elementos presentes en el archivo de entrada.
+ * @param M           Número máximo de elementos que se pueden cargar en memoria principal.
+ *
+ */
 void quicksort_external(const std::string& input_file, const std::string& output_file, int a, int64_t N, int64_t M) {
-    //printf("[INFO] Iniciando quicksort externo con N=%ld, M=%ld, a=%d\n", N, M, a);
-    fflush(stdout);
 
     if (N <= M) {
         // Cargar, ordenar en memoria y escribir
@@ -72,11 +83,6 @@ void quicksort_external(const std::string& input_file, const std::string& output
     // Tomamos los a-1 primeros como pivotes
     std::vector<int64_t> pivots(pivot_buf.begin(), pivot_buf.begin() + a - 1);
     std::sort(pivots.begin(), pivots.end());
-
-    //printf("[INFO] Pivotes seleccionados: ");
-    //for (auto p : pivots) printf("%ld ", p);
-    //printf("\n");
-    //fflush(stdout);
 
     // Preparar archivos de partición
     std::vector<std::string> part_files;
@@ -163,13 +169,25 @@ void quicksort_external(const std::string& input_file, const std::string& output
     }
 
     fclose(out);
-    //printf("[INFO] Escritura final completa\n");
-    //printf("[RESULTADO] I/Os totales: %ld (lecturas: %ld, escrituras: %ld)\n", read_io + write_io, read_io, write_io);
+
     total_read_io += read_io;
     total_write_io += write_io;
 }
 
-
+/**
+ * Función principal. Maneja argumentos de línea de comandos, prepara variables
+ * y llama a la función de ordenamiento externo.
+ *
+ * Parámetros:
+ * @param argc Número de argumentos.
+ * @param argv Lista de argumentos. Se espera:
+ *             - argv[1]: nombre del archivo de entrada
+ *             - argv[2]: nombre del archivo de salida
+ *             - argv[3]: número de particiones (a)
+ *             - argv[4]: tamaño en bytes del archivo de entrada
+ *
+ * Retorna 0 si todo fue exitoso, 1 si hubo error de uso.
+ */
 int main(int argc, char* argv[]) {
     if (argc != 5) {
         fprintf(stderr, "Uso: %s <archivo_entrada> <archivo_salida> <a> <N_bytes>\n", argv[0]);
@@ -185,22 +203,16 @@ int main(int argc, char* argv[]) {
     int64_t M = 50 * 1024 * 1024; // 50MB de memoria
     M = M / ELEMENT_SIZE;
 
-    //printf("[MAIN] Archivo de entrada: %s\n", input_file.c_str());
-    //printf("[MAIN] Archivo de salida:  %s\n", output_file.c_str());
-    //printf("[MAIN] Tamanho total de entrada: %ld elementos (%ld bytes)\n", N, N_bytes);
-    //printf("[MAIN] Memoria disponible: %ld elementos (%ld bytes)\n", M, M * ELEMENT_SIZE);
-    //printf("[MAIN] Valor de a (cantidad de particiones): %d\n", a);
-    //fflush(stdout);
-
     auto start = high_resolution_clock::now();
 
     quicksort_external(input_file, output_file, a, N, M);
 
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(end - start);
-    printf("[MAIN] Tiempo total: %lld ms\n", duration.count());
-    printf("[RESULTADO] I/Os totales: %ld (lecturas: %ld, escrituras: %ld)\n",
-       total_read_io + total_write_io, total_read_io, total_write_io);
 
-    return 0;
+    printf("Tiempo total: %lld ms\n", duration.count());
+    printf("I/Os totales: %ld (lecturas: %ld, escrituras: %ld)\n",
+        total_read_io + total_write_io, total_read_io, total_write_io);
+    
+        return 0;
 }
