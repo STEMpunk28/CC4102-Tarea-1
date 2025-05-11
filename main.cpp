@@ -32,42 +32,35 @@ public:
     }
 };
 
-// Ejecuta un comando y muestra errores si falla
 bool run_command(const std::string& cmd, TeeStream& out) {
+    std::string temp_file = "experimentacion.txt";
+    std::string full_cmd = cmd + " > " + temp_file + " 2>&1"; // Redirect stdout and stderr
+
     out << "Ejecutando: " << cmd << std::endl;
-    
-    // Open process using popen to capture stdout
-    std::array<char, 128> buffer;
-    std::string result;
-    FILE* fp = popen(cmd.c_str(), "r");
-    if (!fp) {
-        out << "Error al ejecutar: " << cmd << std::endl;
-        return false;
-    }
 
-    // Read the command output line by line
-    while (fgets(buffer.data(), buffer.size(), fp) != nullptr) {
-        result += buffer.data();
+    int ret = std::system(full_cmd.c_str());
+    std::ifstream in(temp_file);
+    std::string line;
+    while (std::getline(in, line)) {
+        out << line << '\n';
     }
+    in.close();
+    std::remove(temp_file.c_str());
 
-    // Close the process
-    int ret = pclose(fp);
-    
     if (ret != 0) {
         out << "Error al ejecutar: " << cmd << std::endl;
         return false;
     }
 
-    out << result << std::endl;
-
     return true;
 }
+
 
 int main() {
     const size_t MB = 1024 * 1024;
     const size_t A = 96;
-    const std::string input_file = "tmp/input.bin";
-    const std::string output_file = "tmp/output.bin";
+    const std::string input_file = "/tmp/input.bin";
+    const std::string output_file = "/tmp/output.bin";
 
     TeeStream out(std::cout, "experimentacion.txt");
 
@@ -80,26 +73,26 @@ int main() {
             out << "\n-- Prueba #" << trial << " con N = " << N_in_bytes << " B --\n";
 
             out << ">> generate.exe " << N << "\n";
-            if (!run_command("generate.exe " + input_file + " " + std::to_string(N_in_bytes), out))
+            if (!run_command("./generate " + input_file + " " + std::to_string(N_in_bytes), out))
                  continue;
 
             out << "-> MergeSort\n";
-            if (!run_command("MergeSort.exe " + input_file + " " + output_file + " " + std::to_string(N_in_bytes) + " " + std::to_string(50*MB) + " " + std::to_string(A), out))
+            if (!run_command("./MergeSort " + input_file + " " + output_file + " " + std::to_string(N_in_bytes) + " " + std::to_string(50*MB) + " " + std::to_string(A), out))
                 continue;
 
             out << ">> check.exe " << output_file << "\n";
-            if (!run_command("check.exe " + output_file, out))
+            if (!run_command("./check " + output_file, out))
                 continue;
 
             out << ">> Borrar " << output_file << "\n";
             fs::remove(output_file);
 
             out << "-> QuickSort\n";
-            if (!run_command("QuickSort.exe " + input_file + " " + output_file + " " + std::to_string(A) + " " + std::to_string(N_in_bytes), out))
+            if (!run_command("./QuickSort " + input_file + " " + output_file + " " + std::to_string(A) + " " + std::to_string(N_in_bytes), out))
                 continue;
 
             out << ">> check.exe " << output_file << "\n";
-            if (!run_command("check.exe " + output_file, out))
+            if (!run_command("./check " + output_file, out))
                 continue;
 
             out << ">> Borrar " << output_file << "\n";
