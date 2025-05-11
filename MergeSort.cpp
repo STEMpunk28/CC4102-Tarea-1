@@ -11,15 +11,31 @@
 
 using namespace std::chrono;
 
+// Tamaño de un entero de 64 bits
 const int64_t ELEMENT_SIZE = sizeof(int64_t);
-const int64_t BLOCK_SIZE = 4096;  // Tamaño de bloque de 4096 bytes
+
+// Tamaño de un bloque (en bytes)
+const int64_t BLOCK_SIZE = 4096;
+
+// Cantidad de elementos int64_t que caben en un bloque
 const int64_t ELEMENTS_PER_BLOCK = BLOCK_SIZE / ELEMENT_SIZE;
 
-// Contador global de operaciones de lecturas y escrituras realizadas en disco
+// Contador global de operaciones de lecturas y escrituras totales realizadas en disco
 long total_read_io = 0, total_write_io = 0;
 
+// Contadores globales de operaciones de lectura/escritura en disco
 long read_io = 0, write_io = 0;
 
+/**
+ * Ordena en memoria un archivo binario.
+ * 
+ * @param input_file Nombre del archivo de entrada con los datos a ordenar.
+ * @param output_file Nombre del archivo donde se guardarán los datos ordenados.
+ * @param N Número total de elementos (int64_t) a ordenar.
+ * 
+ * Esta función lee el archivo en bloques, los carga en un vector,
+ * los ordena en memoria usando std::sort y los escribe al archivo de salida.
+ */
 void sort_in_memory(const std::string& input_file, const std::string& output_file, int64_t N) {
     FILE* f = fopen(input_file.c_str(), "rb");
     if (!f) {
@@ -49,6 +65,15 @@ void sort_in_memory(const std::string& input_file, const std::string& output_fil
     fclose(out);
 }
 
+/**
+ * Mezcla varios archivos ordenados en un solo archivo de salida ordenado.
+ * 
+ * @param input_files Vector de nombres de archivos que ya están ordenados individualmente.
+ * @param output_file Nombre del archivo donde se escribirá la mezcla final ordenada.
+ * 
+ * Usa un heap mínimo para realizar la fusión de k-vías. 
+ * Se leen y escriben los datos en bloques de tamaño fijo.
+ */
 void merge_external(const std::vector<std::string>& input_files, const std::string& output_file) {
     std::vector<FILE*> input_fps(input_files.size());
     std::vector<std::vector<int64_t>> buffers(input_files.size());
@@ -119,6 +144,18 @@ void merge_external(const std::vector<std::string>& input_files, const std::stri
     fclose(out);
 }
 
+/**
+ * Implementa el algoritmo de mergesort externo sobre archivos.
+ * 
+ * @param input_file Nombre del archivo de entrada (datos no ordenados).
+ * @param output_file Nombre del archivo de salida donde se guardarán los datos ordenados.
+ * @param N Número total de elementos (int64_t) en el archivo de entrada.
+ * @param M Cantidad máxima de elementos que caben en memoria (según M_bytes / ELEMENT_SIZE).
+ * @param a Aridad del algoritmo: número de particiones a generar (divide el archivo en 'a' bloques).
+ * 
+ * Si los datos caben en memoria, usa `sort_in_memory`.
+ * Si no, divide el archivo en 'a' partes, ordena cada parte recursivamente y luego las fusiona.
+ */
 void mergesort_external(const std::string& input_file, const std::string& output_file, int64_t N, int64_t M, int64_t a) {
 
     if (N <= M) {
@@ -187,7 +224,19 @@ void mergesort_external(const std::string& input_file, const std::string& output
     total_write_io += write_io;
 }
 
-
+/**
+ * Función principal del programa.
+ * 
+ * @param argc Número de argumentos (debe ser 6).
+ * @param argv Argumentos: 
+ *    [1] archivo de entrada,
+ *    [2] archivo de salida,
+ *    [3] N_bytes: tamaño total del archivo de entrada en bytes,
+ *    [4] M_bytes: memoria disponible en bytes,
+ *    [5] aridad a (cantidad de divisiones recursivas).
+ * 
+ * @return 0 si termina exitosamente, 1 en caso de error.
+ */
 int main(int argc, char* argv[]) {
     if (argc != 6) {
         fprintf(stderr, "Uso: %s <archivo_entrada> <archivo_salida> <N_bytes> <M_bytes> <aridad_a>\n", argv[0]);
