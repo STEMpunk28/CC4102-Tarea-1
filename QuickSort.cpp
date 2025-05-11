@@ -5,7 +5,9 @@
 #include <cstdint>
 #include <chrono>
 #include <iostream>
-#include <bits/stdc++.h>
+#include <algorithm>
+#include <random>
+
 using namespace std::chrono;
 
 // Tamaño de un entero de 64 bits (en bytes)
