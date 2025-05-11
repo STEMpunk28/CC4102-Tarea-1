@@ -66,8 +66,8 @@ bool run_command(const std::string& cmd, TeeStream& out) {
 int main() {
     const size_t MB = 1024 * 1024;
     const size_t A = 96;
-    const std::string input_file = "input.bin";
-    const std::string output_file = "output.bin";
+    const std::string input_file = "tmp/input.bin";
+    const std::string output_file = "tmp/output.bin";
 
     TeeStream out(std::cout, "experimentacion.txt");
 
