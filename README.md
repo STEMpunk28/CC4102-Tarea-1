@@ -6,6 +6,12 @@
     - Sebastián Saez H.
 
 ## Encontrar Aridad
+- Echamos a andar la imagen de Docker (Powershell de Windows):
+
+```
+docker run --rm -it -m 50m -v "${PWD}:/workspace" pabloskewes/cc4102-cpp-env bash
+```
+
 - Compilamos el codigo a utilizar
 
 ```
@@ -19,6 +25,11 @@ g++ -O2 -o ./buscarA ./busqueda_a.cpp
 ```
 
 ## Realizar experimentación
+- Echamos a andar la imagen de Docker (Powershell de Windows):
+
+```
+docker run --rm -it -m 50m -v "${PWD}:/workspace" pabloskewes/cc4102-cpp-env bash
+```
 
 - Compilamos los codigos a utilizar
 
@@ -36,4 +47,4 @@ g++ -O2 -o ./main ./main.cpp
 ./main
 ```
 
-Este comando nos regresa un archivo .txt que contiene todos los pasos realizados por durante la experimentación
+Este comando realiza la experimentación, donde cada paso se documenta en la terminal.
