@@ -1,5 +1,10 @@
 # CC4102 Tarea 1
 
+- Integrantes:
+    - Rodrigo Araya G.
+    - Nicolás Gonzalez
+    - Sebastián Saez H.
+
 ## Encontrar Aridad
 
 ## Realizar experimentación
@@ -19,3 +24,5 @@ g++ -O2 -o ./main.exe ./main.cpp
 ```
 ./main.exe
 ```
+
+Este comando nos regresa un archivo .txt que contiene todos los pasos realizados por durante la experimentación
